@@ -33,8 +33,7 @@ namespace efcore.Controllers
                var course = await _courseService.AddCourseAsync(dto);
 
                 return Ok(new 
-                    { message = "Successfully created", 
-                        Id = course.Id });
+                    { message = "Successfully created", Id = course.Id });
             }
             catch (Exception ex)
             {
@@ -97,8 +96,7 @@ namespace efcore.Controllers
             try
             {
                 var course = await _courseRepository.GetCourseByIdAsync(id);
-                    
-
+                
                 return Ok(new { message = "Course retrieved successfully", data = course });
             }
             catch (Exception ex)

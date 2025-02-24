@@ -36,8 +36,7 @@ public class CourseService : ICourseService
         if (string.IsNullOrWhiteSpace(dto.Name))
         {
             throw new Exception("Name is required");
-        }
-                    
+        }        
 
         var course = await _context.Courses.FindAsync(id);
         if (course == null)
@@ -56,12 +55,10 @@ public class CourseService : ICourseService
         if (course == null)
         {
             throw new Exception("course not found");
-        }
-                    
+        }       
 
         _context.Courses.Remove(course);
         await _context.SaveChangesAsync();
 
-        
     }
 }

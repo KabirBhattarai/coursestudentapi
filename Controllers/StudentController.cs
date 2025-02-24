@@ -1,6 +1,8 @@
 ﻿using efcore.Data;
 using efcore.Dtos;
 using efcore.Entities;
+using efcore.Repositories.Interfaces;
+using efcore.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,41 +13,24 @@ namespace efcore.Controllers
     public class StudentController : ControllerBase
     {
         private readonly EfcoreDbContext _context;
+        private readonly IStudentService _studentService;
+        private readonly IStudentRepository _studentRepository;
 
-        public StudentController(EfcoreDbContext context)
+        public StudentController(EfcoreDbContext context, IStudentService studentService, IStudentRepository studentRepository)
         {
             _context = context;
+            _studentService = studentService;
+            _studentRepository = studentRepository;
         }
 
         
         [HttpPost]
-        public async Task<IActionResult> CreateStudent([FromBody] StudentRequestDto input)
+        public async Task<IActionResult> CreateStudent([FromBody] StudentRequestDto dto)
         {
             try
             {
-
-                if (string.IsNullOrWhiteSpace(input.Name))
-                {
-                    throw new Exception("Name is required");
-                }
-                   
-
+                var student = await _studentService.AddStudentAsync(dto);
                 
-                var courseExists = await _context.Courses.AnyAsync(c => c.Id == input.CourseId);
-                if (!courseExists)
-                {
-                    throw new Exception("Course does not exist");
-                }
-
-                var student = new Student
-                {
-                    Name = input.Name,
-                    CourseId = input.CourseId
-                };
-
-                _context.Students.Add(student);
-                await _context.SaveChangesAsync();
-
                 return Ok(new { message = "Successfully created", Id = student.Id });
             }
             catch (Exception ex)
@@ -56,32 +41,11 @@ namespace efcore.Controllers
 
         
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateStudent(int id, [FromBody] StudentRequestDto input)
+        public async Task<IActionResult> UpdateStudent(int id, [FromBody] StudentRequestDto dto)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(input.Name))
-                {
-                    throw new Exception("Name is required");
-                }
-                    
-
-                var student = await _context.Students.FindAsync(id);
-                if (student == null)
-                {
-                    throw new Exception("Student does not exist");
-                }
-                   
-
-                var courseExists = await _context.Courses.AnyAsync(c => c.Id == input.CourseId);
-                if (!courseExists)
-                {
-                    throw new Exception("Course does not exist");
-                }
-
-                student.Name = input.Name;
-                student.CourseId = input.CourseId;
-                await _context.SaveChangesAsync();
+                var student = await _studentService.UpdateStudentAsync(id, dto);
 
                 return Ok(new { message = "Successfully updated", Id = student.Id });
             }
@@ -97,16 +61,40 @@ namespace efcore.Controllers
         {
             try
             {
-                var student = await _context.Students.FindAsync(id);
-                if (student == null)
-                {
-                    throw new Exception("Student does not exist");
-                }
-
-                _context.Students.Remove(student);
-                await _context.SaveChangesAsync();
+                await _studentService.DeleteStudentAsync(id);
 
                 return Ok(new { message = "Successfully deleted" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllStudents()
+        {
+            try
+            {
+                var students = await _studentRepository.GetStudentsAsync();
+                
+                return Ok(new { message = "Successfully retrieved", students = students });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetStudentById(int id)
+        {
+            try
+            {
+                var student = await _studentRepository.GetStudentByIdAsync(id);
+                
+                return Ok(new { message = "Successfully retrieved", data = student });
+
             }
             catch (Exception ex)
             {
